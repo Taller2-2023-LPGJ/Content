@@ -23,11 +23,8 @@ async function editPost(id, username, body, private = false, tags = []){
         throw new Exception("SnapMsgs must be 280 or less characters long.", 403);
 
     try{
-        console.log('1');
 		await database.editPost(isNaN(id) ? 0 : +id, username, body, private);
-        console.log('2');
         await database.editTags(isNaN(id) ? 0 : +id, tags);
-        console.log('3');
 	} catch(err){
 		throw err;
 	}

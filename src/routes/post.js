@@ -5,7 +5,6 @@ const {
     createPost,
     editPost,
     deletePost,
-    fetchComments,
     fetchPosts,
 } = require('../controllers/post');
 

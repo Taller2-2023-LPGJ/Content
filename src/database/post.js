@@ -20,7 +20,6 @@ async function createPost(parentId, username, body, private){
 
         return post.id;
     } catch(err){
-        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     } finally{
         await prisma.$disconnect();
@@ -91,7 +90,6 @@ async function editTags(id, tags){
             },
         });
     } catch(err){
-        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     } finally{
         await prisma.$disconnect();
@@ -100,7 +98,6 @@ async function editTags(id, tags){
     try{
         await addTags(id, tags);
     } catch(err){
-        console.log(err);
         throw err;
     }
 }
@@ -240,7 +237,6 @@ async function fetchTags(parentId, ids){
 
         return tags;
     } catch(err){
-        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     } finally{
         await prisma.$disconnect();
