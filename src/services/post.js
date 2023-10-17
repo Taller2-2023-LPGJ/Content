@@ -79,6 +79,7 @@ async function fetchPosts(username, parentId = 0, author, page = 0){
             tags: tags[post.id]
         }));
 	} catch(err){
+	    	console.log(err);
 		throw err;
 	}
 }
