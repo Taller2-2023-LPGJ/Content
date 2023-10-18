@@ -127,8 +127,21 @@ async function deletePost(id, username){
     }
 }
 
-async function fetchPosts(username, parentId, page){
+async function fetchPosts(username, page, parentId, author){
     const prisma = new PrismaClient();
+    let extraOrderBy = '';
+
+    if(!author)
+        extraOrderBy = `
+            CASE WHEN
+                EXISTS(
+                    SELECT 1
+                    FROM follows
+                    WHERE follower = '${username}' AND followed = author
+                ) THEN 0
+                ELSE 1
+            END,
+        `;
 
     try{
         return await prisma.$queryRaw`
@@ -137,105 +150,54 @@ async function fetchPosts(username, parentId, page){
                 author,
                 body,
                 "creationDate",
-                "editingDate"
+                "editingDate",
+                COUNT(l."postId")::integer AS likes,
+                ${username} = ANY (
+                    SELECT username FROM likes l2 WHERE l2."postId" = id
+                ) AS liked, (
+                    SELECT array_agg(name)
+                    FROM tags t INNER JOIN "postTags" pt ON t.id = pt."tagId"
+                    WHERE pt."postId" = p.id
+                ) AS tags, EXISTS (
+                    SELECT 1
+                    FROM favourites f
+                    WHERE f."postId" = id AND f.username = 'gstfrenkel'
+                ) AS fav
             FROM
-                posts
+                posts p
+            LEFT JOIN likes l ON l."postId" = id
             WHERE
-                "parentId" = ${parentId} AND (
-                    private = false OR
-                    private = (
-                        CASE WHEN ${username} = author THEN true
-                        ELSE EXISTS(
-                            SELECT 1
-                            FROM follows
-                            WHERE follower = ${username} AND followed = author
-                        ) AND 
-                        EXISTS(
-                            SELECT 1
-                            FROM follows
-                            WHERE follower = author AND followed = ${username}
+                "parentId" = ${parentId}
+                AND author = COALESCE(${author}, author)
+                AND (
+                    private = false
+                    OR (
+                        private = true
+                        AND (
+                            author = ${username}
+                            OR 2 = (
+                                SELECT COUNT(1)
+                                FROM follows
+                                WHERE (
+                                    (follower = ${username} AND followed = author)
+                                    OR (followed = ${username} AND follower = author))
+                            )
                         )
-                        END
                     )
                 )
+            GROUP BY id
             ORDER BY
-                CASE WHEN
-                    EXISTS(
+                CASE
+                    WHEN author = ${username} THEN 0
+                    WHEN EXISTS(
                         SELECT 1
                         FROM follows
-                        WHERE follower = ${username} AND followed = author
+                        WHERE follower = '${username}' AND followed = author
                     ) THEN 0
                     ELSE 1
                 END,
                 "creationDate" DESC
-            LIMIT ${pageSize} OFFSET ${pageSize * page};`;
-    } catch(err){
-        throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
-    }
-}
-
-async function fetchUserPosts(username, author, page){
-    const prisma = new PrismaClient();
-
-    try{
-        let dualFollow = await prisma.$queryRaw`
-            SELECT 
-                EXISTS(
-                    SELECT 1
-                    FROM follows
-                    WHERE follower = ${username} AND followed = ${author}
-                ) AND 
-                EXISTS(
-                    SELECT 1
-                    FROM follows
-                    WHERE follower = ${author} AND followed = ${username}
-                ) AS result`;
-                
-        dualFollow = dualFollow[0].result || author === username;
-
-        return await prisma.$queryRaw`
-            SELECT 
-                id,
-                author,
-                body,
-                "creationDate",
-                "editingDate"
-            FROM
-                posts
-            WHERE
-                "parentId" = 0 AND
-                author = ${author} AND (
-                    private = false OR
-                    private = ${dualFollow}
-                )
-            ORDER BY
-                "creationDate" DESC
-            LIMIT ${pageSize} OFFSET ${pageSize * page};`;
-    } catch(err){
-        throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
-    }
-}
-
-async function fetchTags(parentId, ids){
-    const prisma = new PrismaClient();
-    const tags = {};
-
-    try{
-        for (const id of ids){
-            const postTags = await prisma.$queryRaw`
-                SELECT name
-                FROM tags
-                INNER JOIN "postTags" ON "tagId" = id
-                WHERE "postId" = CAST(${id} AS INTEGER)`;
-
-            tags[id] = postTags.map((postTag) => postTag.name);
-        }
-
-        return tags;
+            LIMIT ${pageSize} OFFSET ${pageSize} * ${page};`;
     } catch(err){
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     } finally{
@@ -248,8 +210,6 @@ module.exports = {
     editPost,
     deletePost,
     fetchPosts,
-    fetchUserPosts,
     addTags,
     editTags,
-    fetchTags,
 };

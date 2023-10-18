@@ -11,7 +11,7 @@ const {
 
 router.get('/:target/followers', viewFollowers);
 router.get('/:target/followed', viewFollowed);
-router.get('/:username', count);
+router.get('/:target', count);
 router.post('/:target', follow);
 router.delete('/:target', unfollow);
 

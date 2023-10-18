@@ -9,7 +9,7 @@ async function createPost(parentId = 0, username, body, private = false, tags = 
         throw new Exception("SnapMsgs must be 280 or less characters long.", 403);
 
     try{
-		const id = await database.createPost(isNaN(parentId) ? 0 : +parentId, username, body, private);
+		const id = await database.createPost(isNaN(+parentId) ? 0 : +parentId, username, body, private);
 		await database.addTags(id, tags);
 	} catch(err){
 		throw err;
@@ -23,8 +23,8 @@ async function editPost(id, username, body, private = false, tags = []){
         throw new Exception("SnapMsgs must be 280 or less characters long.", 403);
 
     try{
-		await database.editPost(isNaN(id) ? 0 : +id, username, body, private);
-        await database.editTags(isNaN(id) ? 0 : +id, tags);
+		await database.editPost(isNaN(+id) ? 0 : +id, username, body, private);
+        await database.editTags(isNaN(+id) ? 0 : +id, tags);
 	} catch(err){
 		throw err;
 	}
@@ -32,7 +32,7 @@ async function editPost(id, username, body, private = false, tags = []){
 
 async function deletePost(id, username){
     try{
-		await database.deletePost(isNaN(id) ? 0 : +id, username);
+		await database.deletePost(isNaN(+id) ? 0 : +id, username);
 	} catch(err){
 		throw err;
 	}
@@ -53,15 +53,11 @@ async function fetchDisplayNames(usernames){
     }
 }
 
-async function fetchPosts(username, parentId = 0, author, page = 0){
-    parentId = isNaN(parentId) ? 0 : +parentId;
-    let posts;
+async function fetchPosts(username, parentId = 0, author = null, page = 0){
+    parentId = isNaN(+parentId) ? 0 : +parentId;
 
     try{
-		if(!author)
-            posts = await database.fetchPosts(username, parentId, page);
-        else
-            posts = await database.fetchUserPosts(username, author, page);
+        const posts = await database.fetchPosts(username, page, parentId, author);
 
         if(posts.length === 0){
             if(parentId === 0)
@@ -71,12 +67,10 @@ async function fetchPosts(username, parentId = 0, author, page = 0){
         }    
 
         const displayNames = await fetchDisplayNames(author ? [author] : posts.map(post => post.author));
-        const tags = await database.fetchTags(parentId, posts.map(post => +post.id));
 
         return posts.map((post) => ({
             ...post,
             displayName: displayNames[post.author] || '',
-            tags: tags[post.id]
         }));
 	} catch(err){
 	    	console.log(err);
@@ -89,4 +83,5 @@ module.exports = {
     editPost,
     deletePost,
     fetchPosts,
+    fetchDisplayNames,
 }

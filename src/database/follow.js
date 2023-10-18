@@ -116,24 +116,30 @@ async function viewFollowed(target, page, all = false){
     }
 }
 
-async function count(username){
+async function count(target, username){
     const prisma = new PrismaClient();
 
     try {
-        const followers = await prisma.follows.count({
-            where: {
-                followed: username
-            }
-        });
+        const result = await prisma.$queryRaw`
+            SELECT (
+                SELECT COUNT(1)::integer
+                FROM follows
+                WHERE follower = ${target}
+            ) AS followed, (
+                SELECT COUNT(1)::integer
+                FROM follows
+                WHERE followed = ${target}
+            ) AS followers, EXISTS (
+                SELECT 1
+                FROM follows
+                WHERE
+                    followed = ${target}
+                    AND follower = ${username}
+            ) as following;
+        `;
 
-        const followed = await prisma.follows.count({
-            where: {
-                follower: username
-            }
-        });
-
-        return {followers: followers, followed: followed};
-    } catch(_) {
+        return result[0];
+    } catch(err) {
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     } finally{
         await prisma.$disconnect();
