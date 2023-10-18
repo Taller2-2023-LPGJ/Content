@@ -1,11 +1,11 @@
 const Exception = require('../services/exception');
-const followSrv = require('../services/follow');
+const service = require('../services/follow');
 
 const follow = (req, res) => {
     const { username } = req.body;
     const { target }  = req.params;
 
-    followSrv.follow(username, target)
+    service.follow(username, target)
         .then(() => {
             res.status(200).json({message: 'Attempt to follow ' + target + ' was successful.'});
         })
@@ -18,7 +18,7 @@ const unfollow = (req, res) => {
     const { username } = req.body;
     const { target }  = req.params;
 
-    followSrv.unfollow(username, target)
+    service.unfollow(username, target)
         .then(() => {
             res.status(200).json({message: 'Attempt to unfollow ' + target + ' was successful.'});
         })
@@ -31,7 +31,7 @@ const viewFollowers = (req, res) => {
     const { username, page } = req.query;
     const { target }  = req.params;
 
-    followSrv.viewFollowers(username, target, page)
+    service.viewFollowers(username, target, page)
         .then((result) => {
             res.status(200).json({followers: result});
         })
@@ -44,7 +44,7 @@ const viewFollowed = (req, res) => {
     const { username, page } = req.query;
     const { target }  = req.params;
 
-    followSrv.viewFollowed(username, target, page)
+    service.viewFollowed(username, target, page)
         .then((result) => {
             res.status(200).json({followed: result});
         })
@@ -54,9 +54,10 @@ const viewFollowed = (req, res) => {
 }
 
 const count = (req, res) => {
-    const { username }  = req.params;
+    const { target }  = req.params;
+    const { username } = req.query;
 
-    followSrv.count(username)
+    service.count(target, username)
         .then((result) => {
             res.status(200).json(result);
         })
