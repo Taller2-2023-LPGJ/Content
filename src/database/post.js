@@ -130,7 +130,7 @@ async function deletePost(id, username){
 async function fetchPosts(username, page, parentId, author){
     const prisma = new PrismaClient();
     let extraOrderBy = '';
-
+    
     if(!author)
         extraOrderBy = `
             CASE WHEN
@@ -197,7 +197,7 @@ async function fetchPosts(username, page, parentId, author){
                     ELSE 1
                 END,
                 "creationDate" DESC
-            LIMIT ${pageSize} OFFSET ${pageSize} * ${page};`;
+            LIMIT ${pageSize} OFFSET ${pageSize * page};`;
     } catch(err){
         console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);

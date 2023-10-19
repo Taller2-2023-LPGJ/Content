@@ -77,7 +77,8 @@ async function unfav(id, username){
 
 async function favs(username, page){
     const prisma = new PrismaClient();
-
+    let offset = pageSize * page;
+    
     try{
         return await prisma.$queryRaw`
             SELECT 
@@ -122,7 +123,7 @@ async function favs(username, page){
                     )
                 )
             GROUP BY id
-            LIMIT ${pageSize} OFFSET ${pageSize} * ${page};`;
+            LIMIT ${pageSize} OFFSET ${pageSize * page};`;
     } catch(err){
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     } finally{
