@@ -73,6 +73,7 @@ async function fetchPosts(username, parentId = 0, author = null, page = 0){
             displayName: displayNames[post.author] || '',
         }));
 	} catch(err){
+	    	console.log(err);
 		throw err;
 	}
 }
