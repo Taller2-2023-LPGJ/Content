@@ -147,9 +147,13 @@ async function fetchPosts(username, page, parentId, author){
                     "creationDate",
                     "editingDate",
                     COUNT(l."postId")::integer AS likes,
+                    COUNT(s."postId")::integer AS shares,
                     ${username} = ANY (
                         SELECT username FROM likes l2 WHERE l2."postId" = id
-                    ) AS liked, (
+                    ) AS liked,
+                    ${username} = ANY (
+                        SELECT username FROM shares s2 WHERE s2."postId" = id
+                    ) AS shared, (
                         SELECT array_agg(name)
                         FROM tags t INNER JOIN "postTags" pt ON t.id = pt."tagId"
                         WHERE pt."postId" = p.id
@@ -161,6 +165,7 @@ async function fetchPosts(username, page, parentId, author){
                 FROM
                     posts p
                 LEFT JOIN likes l ON l."postId" = id
+                LEFT JOIN shares s ON s."postId" = id
                 WHERE
                     author = COALESCE(${author}, author)
                     AND (
