@@ -35,7 +35,7 @@ async function like(id, username){
         throw new Exception('SnapMsg does not exist or has been deleted.');
 
     try{
-        const post = await prisma.likes.create({
+        await prisma.likes.create({
             data: {
                 username: username,
                 postId: id
