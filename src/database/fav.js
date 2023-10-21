@@ -35,7 +35,7 @@ async function fav(id, username){
     }
 
     if(!post || post.length === 0 || post[0].post != 1)
-        throw new Exception('SnapMsg does not exist or was deleted.');
+        throw new Exception('SnapMsg does not exist or has been deleted.', 404);
 
     try{
         const post = await prisma.favourites.create({
@@ -68,7 +68,7 @@ async function unfav(id, username){
         });          
     } catch(err){
         if(err.code == 'P2025')
-            throw new Exception('SnapMsg has not been been added to favourites list.', 404);
+            throw new Exception('SnapMsg does not exist, has been deleted, or has not been been added to favourites list.', 404);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     } finally{
         await prisma.$disconnect();
