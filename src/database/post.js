@@ -204,7 +204,7 @@ async function fetchPosts(username, page, parentId, author){
                 WHERE
                     ${parentId} = 0
                     AND CASE 
-                        WHEN ${author}::text IS NOT NULL THEN (s.username = 'gstfrenkel' OR s.username IS NULL)
+                        WHEN ${author}::text IS NOT NULL THEN s.username = ${author}
                     ELSE (
                         s.username = ${username}
                         OR EXISTS(
