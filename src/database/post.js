@@ -1,7 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const Exception = require('../services/exception');
 
-const pageSize = 20;
 
 async function createPost(parentId, username, body, private){
     const prisma = new PrismaClient();
@@ -106,6 +105,12 @@ async function deletePost(id, username){
     const prisma = new PrismaClient();
 
     try{
+        await prisma.shares.deleteMany({
+            where: {
+                postId: id
+            },
+        });
+
         await prisma.posts.delete({
             where: {
                 id: id,
@@ -115,15 +120,9 @@ async function deletePost(id, username){
 
         await prisma.postTags.deleteMany({
             where: {
-                id: id
-            },
-        });  
-
-        await prisma.shares.deleteMany({
-            where: {
                 postId: id
             },
-        });  
+        });
     } catch(err){
         if(err.code == 'P2025')
             throw new Exception('SnapMsg not found', 404);
@@ -133,7 +132,7 @@ async function deletePost(id, username){
     }
 }
 
-async function fetchPosts(username, page, parentId, author){
+async function fetchPosts(username, page, parentId, author, size){
     const prisma = new PrismaClient();
 
     try{
@@ -144,10 +143,11 @@ async function fetchPosts(username, page, parentId, author){
                     "parentId",
                     author,
                     body,
+                    private,
                     "creationDate",
                     "editingDate",
-                    COUNT(l."postId")::integer AS likes,
-                    COUNT(s."postId")::integer AS shares,
+                    COUNT(DISTINCT l.username)::integer AS likes,
+                    COUNT(DISTINCT s.username)::integer AS shares,
                     ${username} = ANY (
                         SELECT username FROM likes l2 WHERE l2."postId" = id
                     ) AS liked,
@@ -167,20 +167,17 @@ async function fetchPosts(username, page, parentId, author){
                 LEFT JOIN likes l ON l."postId" = id
                 LEFT JOIN shares s ON s."postId" = id
                 WHERE
-                    author = COALESCE(${author}, author)
-                    AND (
-                        private = false
-                        OR (
-                            private = true
-                            AND (
-                                author = ${username}
-                                OR 2 = (
-                                    SELECT COUNT(1)
-                                    FROM follows
-                                    WHERE (
-                                        (follower = ${username} AND followed = author)
-                                        OR (followed = ${username} AND follower = author))
-                                )
+                    private = false
+                    OR (
+                        private = true
+                        AND (
+                            author = ${username}
+                            OR 2 = (
+                                SELECT COUNT(1)
+                                FROM follows
+                                WHERE (
+                                    (follower = ${username} AND followed = author)
+                                    OR (followed = ${username} AND follower = author))
                             )
                         )
                     )
@@ -195,7 +192,8 @@ async function fetchPosts(username, page, parentId, author){
                 FROM
                     "tempPosts" b
                 WHERE
-                    "parentId" = ${parentId}
+                    author = COALESCE(${author}, author)
+                    AND "parentId" = ${parentId}
             
                 UNION ALL
             
@@ -215,21 +213,27 @@ async function fetchPosts(username, page, parentId, author){
                         OR EXISTS(
                             SELECT 1
                             FROM follows
-                            WHERE follower = ${username} AND followed = author
+                            WHERE follower = ${username} AND followed = s.username
                         )
                     ) END
             ) ORDER BY
                 CASE
-                    WHEN author = ${username} THEN 0
-                    WHEN EXISTS(
+                    WHEN author = ${username} OR "sharedBy" = ${username} THEN 0
+                    WHEN "sharedBy" IS NULL AND EXISTS(
                         SELECT 1
                         FROM follows
-                        WHERE follower = ${username} AND followed = author
+                        WHERE follower = ${username} AND followed = (
+                            CASE
+                                WHEN "sharedBy" IS NULL THEN author
+                            ELSE
+                                "sharedBy"
+                            END
+                        )
                     ) THEN 0
                     ELSE 1
                 END,
                 COALESCE("sharedAt", "creationDate") DESC
-            LIMIT ${pageSize} OFFSET ${pageSize * page};`;
+            LIMIT ${size} OFFSET ${size * page};`;
     } catch(err){
         console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);

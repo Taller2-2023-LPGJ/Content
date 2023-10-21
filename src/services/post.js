@@ -2,6 +2,8 @@ const axios = require('axios');
 const database = require('../database/post');
 const Exception = require('./exception');
 
+const pageSize = 20;
+
 async function createPost(parentId = 0, username, body, private = false, tags = []){
     if(!body)
         throw new Exception("A SnapMsg's body must not be empty.", 403);
@@ -53,11 +55,11 @@ async function fetchDisplayNames(usernames){
     }
 }
 
-async function fetchPosts(username, parentId = 0, author = null, page = 0){
+async function fetchPosts(username, parentId = 0, author = null, page = 0, size = pageSize){
     parentId = isNaN(+parentId) ? 0 : +parentId;
 
     try{
-        const posts = await database.fetchPosts(username, page, parentId, author);
+        const posts = await database.fetchPosts(username, page, parentId, author, size);
 
         if(posts.length === 0){
             if(parentId === 0)

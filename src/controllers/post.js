@@ -40,10 +40,10 @@ const deletePost = (req, res) => {
 }
 
 const fetchPosts = (req, res) => {
-    const { username, page, author } = req.query;
+    const { username, page, author, size } = req.query;
     const { id } = req.params;
 
-    service.fetchPosts(username, id, author, page)
+    service.fetchPosts(username, id, author, page, size)
         .then((posts) => {
             res.status(200).json(posts);
         })
