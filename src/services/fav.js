@@ -2,7 +2,7 @@ const database = require('../database/fav');
 const Exception = require('./exception');
 
 const {
-    fetchDisplayNames
+    fetchProfileData
 } = require('./post');
 
 async function fav(id, username){
@@ -31,7 +31,7 @@ async function favs(username, page = 0){
     try{
 		const favPosts = await database.favs(username, page);
 
-        const displayNames = await fetchDisplayNames(favPosts.map(post => post.author));
+        const displayNames = await fetchProfileData(favPosts.map(post => post.author));
 
         return favPosts.map((post) => ({
             ...post,

@@ -2,6 +2,7 @@ const axios = require('axios');
 const database = require('../database/post');
 const Exception = require('./exception');
 
+const hashtagSearchRegex = /^#[^#.,;]*$/;
 const pageSize = 20;
 
 async function createPost(parentId = 0, username, body, private = false, tags = []){
@@ -40,14 +41,14 @@ async function deletePost(id, username){
 	}
 }
 
-async function fetchDisplayNames(usernames){
+async function fetchProfileData(usernames){
     try{
-        const displayNames = await axios.post(process.env.PROFILE_URL + 'displayNames', {authors: usernames});
+        const profileData = await axios.post(process.env.PROFILE_URL + 'profileData', {authors: usernames});
 
-        if(!displayNames)
+        if(!profileData)
             throw new Exception('An unexpected error has occurred. Please try again later', 500);
 
-        return displayNames.data;
+        return profileData.data;
 	} catch(err){
         if(axios.isAxiosError(err))
             throw new Exception('An unexpected error has occurred. Please try again later', 500);
@@ -55,11 +56,21 @@ async function fetchDisplayNames(usernames){
     }
 }
 
-async function fetchPosts(username, parentId = 0, author = null, page = 0, size = pageSize){
-    parentId = isNaN(+parentId) ? 0 : +parentId;
+async function fetchPosts(username, parentId = 0, author = null, body = '', page = 0, size = pageSize){
+    if(body && body.length > 0){
+        if(body[0] === '#')
+            body = body.split(' ')[0];
+        if(!hashtagSearchRegex.test(body))
+            throw new Exception('Hashtag searching may not contain other hashtags or punctuation.');
+    }
+
+    parentId = body !== '' || isNaN(+parentId) ? 0 : +parentId;
+
+    if(body.length > 0 && body[0] === '#')
+        body = body.split(' ')[0];
 
     try{
-        const posts = await database.fetchPosts(username, page, parentId, author, size);
+        const posts = await database.fetchPosts(username, page, parentId, author, body, size);
 
         if(posts.length === 0){
             if(parentId === 0)
@@ -68,14 +79,17 @@ async function fetchPosts(username, parentId = 0, author = null, page = 0, size 
                 throw new Exception('It may seem as if this SnapMsg has no comments. Go ahead and be the first one!', 200);
         }    
 
-        const displayNames = await fetchDisplayNames(author ? [author] : posts.map(post => post.author));
+        const profileData = await fetchProfileData(author ? [author] : posts.map(post => post.author));
+
+        console.log(profileData);
 
         return posts.map((post) => ({
             ...post,
-            displayName: displayNames[post.author] || '',
+            displayName: profileData[post.author].displayName ?? '',
+            picture: profileData[post.author].picture ?? '',
+            verified: profileData[post.author].verified ?? false
         }));
 	} catch(err){
-	    	console.log(err);
 		throw err;
 	}
 }
@@ -85,5 +99,5 @@ module.exports = {
     editPost,
     deletePost,
     fetchPosts,
-    fetchDisplayNames,
+    fetchProfileData: fetchProfileData,
 }
