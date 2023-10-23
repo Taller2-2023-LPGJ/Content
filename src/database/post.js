@@ -242,7 +242,6 @@ async function fetchPosts(username, page, parentId, author, body, size){
                 COALESCE("sharedAt", "creationDate") DESC
             LIMIT ${size} OFFSET ${size * page};`;
     } catch(err){
-        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     } finally{
         await prisma.$disconnect();
@@ -251,9 +250,6 @@ async function fetchPosts(username, page, parentId, author, body, size){
 
 async function fetchPost(username, id){
     const prisma = new PrismaClient();
-
-    console.log(username);
-    console.log(id);
 
     try{
         return await prisma.$queryRaw`
@@ -307,7 +303,6 @@ async function fetchPost(username, id){
                 )
             GROUP BY id;`;
     } catch(err){
-        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     } finally{
         await prisma.$disconnect();
