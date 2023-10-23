@@ -8,12 +8,14 @@ async function fetchPosts(id, parentId, author = '', body = '', private = null, 
         return [];
  
     try{
-        const posts = await database.fetchPosts(id ? +id : null, parentId ? +parentId : null, author, body, private, page, size);
-        const displayNames = await fetchProfileData(posts.map(post => post.author));
+        const posts = await database.fetchPosts(id ? +id : null, parentId ? +parentId : null, author, body, private, isNaN(+page) ? 0 : +page, isNaN(+size) ? 15 : +size);
+        const profileData = await fetchProfileData(posts.map(post => post.author));
 
         return posts.map((post) => ({
             ...post,
-            displayName: displayNames[post.author] || '',
+            displayName: profileData[post.author].displayName ?? '',
+            picture: profileData[post.author].picture ?? '',
+            verified: profileData[post.author].verified ?? false
         }));
 	} catch(err){
 		throw err;

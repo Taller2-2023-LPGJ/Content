@@ -46,42 +46,49 @@ async function fetchProfileData(usernames){
         const profileData = await axios.post(process.env.PROFILE_URL + 'profileData', {authors: usernames});
 
         if(!profileData)
-            throw new Exception('An unexpected error has occurred. Please try again later', 500);
+            throw new Exception('An unexpected error has occurred. Please try again later.', 500);
 
         return profileData.data;
 	} catch(err){
         if(axios.isAxiosError(err))
-            throw new Exception('An unexpected error has occurred. Please try again later', 500);
+            throw new Exception('An unexpected error has occurred. Please try again later.', 500);
         throw err;
     }
 }
 
-async function fetchPosts(username, parentId = 0, author = null, body = '', page = 0, size = pageSize){
-    if(body && body.length > 0){
-        if(body[0] === '#')
+async function fetchPosts(username, parentId = 0, id, author = null, body = '', page = 0, size = pageSize){
+    if(!id){
+        if(body && body.length > 0){
+            if(body[0] === '#')
+                body = body.split(' ')[0];
+            if(!hashtagSearchRegex.test(body))
+                throw new Exception('Hashtag searching may not contain other hashtags or punctuation.');
+        }
+    
+        parentId = body !== '' || isNaN(+parentId) ? 0 : +parentId;
+    
+        if(body.length > 0 && body[0] === '#')
             body = body.split(' ')[0];
-        if(!hashtagSearchRegex.test(body))
-            throw new Exception('Hashtag searching may not contain other hashtags or punctuation.');
     }
 
-    parentId = body !== '' || isNaN(+parentId) ? 0 : +parentId;
-
-    if(body.length > 0 && body[0] === '#')
-        body = body.split(' ')[0];
-
     try{
-        const posts = await database.fetchPosts(username, page, parentId, author, body, size);
+        let posts = null;
+
+        if(!id)
+            posts = await database.fetchPosts(username, page, parentId, author, body, size);
+        else
+            posts = await database.fetchPost(username, isNaN(+id) ? 0 : +id);
 
         if(posts.length === 0){
-            if(parentId === 0)
+            if(id)
+                throw new Exception('SnapMsg not found.', 404);
+            else if(parentId === 0)
                 throw new Exception('It may seem as if you have no more SnapMsgs to see. Go catch some fresh air and come back later!', 200);
             else
                 throw new Exception('It may seem as if this SnapMsg has no comments. Go ahead and be the first one!', 200);
         }    
 
         const profileData = await fetchProfileData(author ? [author] : posts.map(post => post.author));
-
-        console.log(profileData);
 
         return posts.map((post) => ({
             ...post,
