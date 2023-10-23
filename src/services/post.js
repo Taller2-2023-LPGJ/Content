@@ -88,7 +88,7 @@ async function fetchPosts(username, parentId = 0, id, author = null, body = '', 
                 throw new Exception('It may seem as if this SnapMsg has no comments. Go ahead and be the first one!', 200);
         }    
 
-        const profileData = await fetchProfileData(author ? [author] : posts.map(post => post.author));
+        const profileData = await fetchProfileData(posts.map(post => post.author));
 
         return posts.map((post) => ({
             ...post,
