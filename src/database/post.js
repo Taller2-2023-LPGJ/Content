@@ -132,7 +132,7 @@ async function deletePost(id, username){
     }
 }
 
-async function fetchPosts(username, page, parentId, author, size){
+async function fetchPosts(username, page, parentId, author, body, size){
     const prisma = new PrismaClient();
 
     try{
@@ -147,7 +147,9 @@ async function fetchPosts(username, page, parentId, author, size){
                     "creationDate",
                     "editingDate",
                     COUNT(DISTINCT l.username)::integer AS likes,
-                    COUNT(DISTINCT s.username)::integer AS shares,
+                    COUNT(DISTINCT s.username)::integer AS shares, (
+                        SELECT COUNT(1)::integer FROM posts p2 WHERE p2."parentId" = p.id
+                    ) AS replies,
                     ${username} = ANY (
                         SELECT username FROM likes l2 WHERE l2."postId" = id
                     ) AS liked,
@@ -194,6 +196,10 @@ async function fetchPosts(username, page, parentId, author, size){
                 WHERE
                     author = COALESCE(${author}, author)
                     AND "parentId" = ${parentId}
+                    AND (
+                        LOWER(body) LIKE '% ' || LOWER(${body}) || '%'
+                        OR LOWER(body) LIKE LOWER(${body}) || '%'
+                    )
             
                 UNION ALL
             
@@ -206,6 +212,7 @@ async function fetchPosts(username, page, parentId, author, size){
                 INNER JOIN shares s ON s."postId" = id
                 WHERE
                     ${parentId} = 0
+                    AND ${body} = ''
                     AND CASE 
                         WHEN ${author}::text IS NOT NULL THEN s.username = ${author}
                     ELSE (
@@ -219,7 +226,7 @@ async function fetchPosts(username, page, parentId, author, size){
             ) ORDER BY
                 CASE
                     WHEN author = ${username} OR "sharedBy" = ${username} THEN 0
-                    WHEN "sharedBy" IS NULL AND EXISTS(
+                    WHEN EXISTS(
                         SELECT 1
                         FROM follows
                         WHERE follower = ${username} AND followed = (
