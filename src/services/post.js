@@ -50,6 +50,7 @@ async function fetchProfileData(usernames){
 
         return profileData.data;
 	} catch(err){
+	    console.log(err);
         if(axios.isAxiosError(err))
             throw new Exception('An unexpected error has occurred. Please try again later.', 500);
         throw err;
@@ -88,8 +89,16 @@ async function fetchPosts(username, parentId = 0, id, author = null, body = '', 
                 throw new Exception('It may seem as if this SnapMsg has no comments. Go ahead and be the first one!', 200);
         }    
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+        const profileData = await fetchProfileData(author ? [author] : posts.map(post => post.author));
+      
+=======
+>>>>>>> c949e94bf0ad73813c55a184a8a86330ee42ac14
         const profileData = await fetchProfileData(posts.map(post => post.author));
 
+>>>>>>> d3d6f6e (Bug fix when retrieving profile retweets)
         return posts.map((post) => ({
             ...post,
             displayName: profileData[post.author].displayName ?? '',
