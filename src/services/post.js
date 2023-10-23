@@ -50,6 +50,7 @@ async function fetchProfileData(usernames){
 
         return profileData.data;
 	} catch(err){
+	    console.log(err);
         if(axios.isAxiosError(err))
             throw new Exception('An unexpected error has occurred. Please try again later', 500);
         throw err;
