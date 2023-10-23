@@ -50,6 +50,7 @@ async function fetchProfileData(usernames){
 
         return profileData.data;
 	} catch(err){
+	    console.log(err);
         if(axios.isAxiosError(err))
             throw new Exception('An unexpected error has occurred. Please try again later.', 500);
         throw err;
@@ -89,7 +90,7 @@ async function fetchPosts(username, parentId = 0, id, author = null, body = '', 
         }    
 
         const profileData = await fetchProfileData(author ? [author] : posts.map(post => post.author));
-
+      
         return posts.map((post) => ({
             ...post,
             displayName: profileData[post.author].displayName ?? '',
