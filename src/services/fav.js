@@ -31,11 +31,13 @@ async function favs(username, page = 0){
     try{
 		const favPosts = await database.favs(username, page);
 
-        const displayNames = await fetchProfileData(favPosts.map(post => post.author));
+        const profileData = await fetchProfileData(favPosts.map(post => post.author));
 
         return favPosts.map((post) => ({
             ...post,
-            displayName: displayNames[post.author] || '',
+            displayName: profileData[post.author].displayName ?? '',
+            picture: profileData[post.author].picture ?? '',
+            verified: profileData[post.author].verified ?? false
         }));
 	} catch(err){
 		throw err;

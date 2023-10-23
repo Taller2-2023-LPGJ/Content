@@ -5,7 +5,7 @@ async function fetchPosts(id, parentId, author, body, private, page, size){
     const prisma = new PrismaClient();
 
     try{
-        return await prisma.$queryRaw`
+        const posts = await prisma.$queryRaw`
             SELECT 
                 id,
                 "parentId",
@@ -35,8 +35,15 @@ async function fetchPosts(id, parentId, author, body, private, page, size){
             GROUP BY id            
             ORDER BY "parentId" ASC, id ASC
             LIMIT ${size} OFFSET ${size * page};`;
+
+        const postCount = await prisma.$queryRaw`
+            SELECT 
+                COUNT(DISTINCT id)::integer
+            FROM
+                posts p`;
+
+        return [postCount[0].count, posts];
     } catch(err){
-        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     } finally{
         await prisma.$disconnect();

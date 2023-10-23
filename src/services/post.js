@@ -50,7 +50,6 @@ async function fetchProfileData(usernames){
 
         return profileData.data;
 	} catch(err){
-	    console.log(err);
         if(axios.isAxiosError(err))
             throw new Exception('An unexpected error has occurred. Please try again later.', 500);
         throw err;
@@ -88,7 +87,7 @@ async function fetchPosts(username, parentId = 0, id, author = null, body = '', 
             else
                 throw new Exception('It may seem as if this SnapMsg has no comments. Go ahead and be the first one!', 200);
         }    
-        
+
         const profileData = await fetchProfileData(posts.map(post => post.author));
 
         return posts.map((post) => ({
@@ -107,5 +106,5 @@ module.exports = {
     editPost,
     deletePost,
     fetchPosts,
-    fetchProfileData: fetchProfileData,
+    fetchProfileData,
 }
