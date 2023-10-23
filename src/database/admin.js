@@ -40,7 +40,13 @@ async function fetchPosts(id, parentId, author, body, private, page, size){
             SELECT 
                 COUNT(DISTINCT id)::integer
             FROM
-                posts p`;
+                posts p
+            WHERE
+                id = COALESCE(${id}, id)
+                AND "parentId" = COALESCE(${parentId}, "parentId")
+                AND private = COALESCE(${private}, private)
+                AND LOWER(author) LIKE '%' || LOWER(${author}) || '%'             
+                AND LOWER(body) LIKE '%' || LOWER(${body}) || '%'`;
 
         return [postCount[0].count, posts];
     } catch(err){

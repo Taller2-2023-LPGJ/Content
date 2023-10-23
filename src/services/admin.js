@@ -10,8 +10,6 @@ async function fetchPosts(id, parentId, author = '', body = '', private = null, 
     try{
         const result = await database.fetchPosts(id ? +id : null, parentId ? +parentId : null, author, body, private, isNaN(+page) ? 0 : +page, isNaN(+size) ? 15 : +size);
         
-        console.log(result);
-
         const profileData = await fetchProfileData(result[1].map(post => post.author));
 
         const posts = result[1].map((post) => ({
