@@ -83,6 +83,7 @@ async function fetchPosts(username, parentId = 0, author = null, body = '', page
         const profileData = await fetchProfileData(author ? [author] : posts.map(post => post.author));
 	console.log("-----------profileData--------------");
         console.log(profileData);
+	console.log("-----------post--------------");
 	console.log(posts);
         return posts.map((post) => ({
             ...post,
