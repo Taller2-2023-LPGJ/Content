@@ -135,6 +135,8 @@ async function deletePost(id, username){
 async function fetchPosts(username, page, parentId, author, body, size){
     const prisma = new PrismaClient();
 
+    console.log(body);
+
     try{
         return await prisma.$queryRaw`
             WITH "tempPosts" AS (
@@ -197,10 +199,13 @@ async function fetchPosts(username, page, parentId, author, body, size){
                     author = COALESCE(${author}, author)
                     AND "parentId" = ${parentId}
                     AND (
-                        LOWER(body) LIKE '% ' || LOWER(${body}) || '%'
-                        OR LOWER(body) LIKE LOWER(${body}) || '%'
+                        CASE WHEN LEFT(${body}, 1) = '#' THEN
+                            body ~* (${body} || '[[:>:]]')
+                        ELSE
+                            LOWER(body) LIKE '%' || LOWER(${body}) || '%'
+                        END
                     )
-            
+
                 UNION ALL
             
                 SELECT
