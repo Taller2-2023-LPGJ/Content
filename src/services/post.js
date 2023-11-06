@@ -57,23 +57,9 @@ async function fetchProfileData(usernames){
 }
 
 async function fetchPosts(username, parentId = 0, id, author = null, body = '', page = 0, size = pageSize){
-    if(!id){
-        if(body && body.length > 0){
-            if(body[0] === '#')
-                body = body.split(' ')[0];
-            if(!hashtagSearchRegex.test(body))
-                throw new Exception('Hashtag searching may not contain other hashtags or punctuation.');
-        }
+    let posts = null;
     
-        parentId = body !== '' || isNaN(+parentId) ? 0 : +parentId;
-    
-        if(body.length > 0 && body[0] === '#')
-            body = body.split(' ')[0];
-    }
-
     try{
-        let posts = null;
-
         if(!id)
             posts = await database.fetchPosts(username, page, parentId, author, body, size);
         else
