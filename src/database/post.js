@@ -135,8 +135,6 @@ async function deletePost(id, username){
 async function fetchPosts(username, page, parentId, author, body, size){
     const prisma = new PrismaClient();
 
-    console.log(body);
-
     try{
         return await prisma.$queryRaw`
             WITH "tempPosts" AS (
