@@ -73,7 +73,42 @@ async function unshare(id, username){
     }
 }
 
+async function numberSharedPosts(username, startdate, finaldate){
+    const prisma = new PrismaClient();
+    var where = {};
+    if(startdate || finaldate){
+        where.creation = {}
+    }
+
+    if(startdate){
+        where.creation.gte = new Date(startdate);
+    }
+
+    if(finaldate){
+        where.creation.lte = new Date(finaldate);
+    }
+
+    try{
+        var postsUser = await prisma.posts.findMany({
+            where: {
+                author: username,
+            }
+        });
+        where.postId = {in : postsUser.map(element => element.id)}
+        where.username = {not: username};
+        return await prisma.shares.count({
+            where: where
+        });
+    } catch(err){
+        console.log(err);
+        throw new Exception('An unexpected error has occurred. Please try again later.', 500);
+    } finally{
+        await prisma.$disconnect();
+    }
+}
+
 module.exports = {
     share,
-    unshare
+    unshare,
+    numberSharedPosts
 };
