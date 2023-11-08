@@ -85,7 +85,7 @@ async function numberSharedPosts(username, startdate, finaldate){
     }
 
     if(finaldate){
-        where.creation.lte = new Date(finaldate);
+        where.creation.lte = new Date(new Date(finaldate).setUTCHours(23,59,59,999));
     }
 
     try{

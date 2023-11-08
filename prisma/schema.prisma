@@ -42,7 +42,8 @@ model tags {
 model likes {
   username  String      @db.VarChar(15)
   postId    Int
-
+  creation  DateTime
+  
   @@id([username, postId])
 }
 

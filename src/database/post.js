@@ -245,6 +245,7 @@ async function fetchPosts(username, page, parentId, author, body, size){
                 COALESCE("sharedAt", "creationDate") DESC
             LIMIT ${size} OFFSET ${size * page};`;
     } catch(err){
+        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     } finally{
         await prisma.$disconnect();
@@ -326,9 +327,9 @@ async function numberPublications(username, startdate, finaldate){
     }
 
     if(finaldate){
-        where.creationDate.lte = new Date(finaldate);
+        where.creationDate.lte = new Date(new Date(finaldate).setUTCHours(23,59,59,999));
     }
-
+    
     try{
         return await prisma.posts.count({
             where: where
@@ -353,7 +354,7 @@ async function numberComments(username, startdate, finaldate){
     }
 
     if(finaldate){
-        where.creationDate.lte = new Date(finaldate);
+        where.creationDate.lte = new Date(new Date(finaldate).setUTCHours(23,59,59,999));
     }
 
     try{

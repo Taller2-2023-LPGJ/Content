@@ -78,7 +78,7 @@ async function numberLikes(username, startdate, finaldate){
         if(startdate || finaldate){
             if(startdate && finaldate){
                 startdate = new Date(startdate);
-                finaldate = new Date(finaldate);
+                finaldate = new Date(new Date(finaldate).setUTCHours(23,59,59,999));
                 var result = await prisma.$queryRaw`
                     SELECT 
                         COUNT(*)::integer
@@ -107,7 +107,7 @@ async function numberLikes(username, startdate, finaldate){
                 `;
                 return result[0].count;
             }else if(finaldate){
-                finaldate = new Date(finaldate);
+                finaldate = new Date(new Date(finaldate).setUTCHours(23,59,59,999));
                 var result = await prisma.$queryRaw`
                     SELECT 
                         COUNT(*)::integer
