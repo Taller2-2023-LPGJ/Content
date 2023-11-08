@@ -38,7 +38,8 @@ async function like(id, username){
         await prisma.likes.create({
             data: {
                 username: username,
-                postId: id
+                postId: id,
+                creation: new Date()
             },
         });
     } catch(err){
