@@ -93,16 +93,16 @@ async function sendNotificationMentioneds(body, post_id, author){
         var users = body.match(/@\w+/g);
         users = users ? users.map(palabra => palabra.slice(1)) : [];
         for (const user of users) {
-            sendNotification(user, post_id, "Mentioned", author + " mentioned you in a SnapMsg " + post_id);
+            await sendNotification(user, post_id, "Mentioned", author + " mentioned you in a SnapMsg " + post_id);
         }
 	} catch(err){
         console.log(err);
 	}
 }
 
-function sendNotification(username, post_id, title, message){
+async function sendNotification(username, post_id, title, message){
     const pushData = "{ " + '"type": "trending","goto":' + '"' + post_id + '"} ';
-    axios.post(process.env.NOTIFICATION_APP_URL, {
+    const profileData = await axios.post(process.env.NOTIFICATION_APP_URL, {
         subID: username,
         appId: process.env.NOTIFICATION_APP_ID,
         appToken: process.env.NOTIFICATION_APP_TOKEN,
