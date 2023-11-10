@@ -14,6 +14,7 @@ async function createPost(parentId = 0, username, body, private = false, tags = 
     try{
 		const id = await database.createPost(isNaN(+parentId) ? 0 : +parentId, username, body, private);
 		await database.addTags(id, tags);
+        await sendNotificationMentioneds(body, id, username);
 	} catch(err){
 		throw err;
 	}
@@ -85,6 +86,30 @@ async function fetchPosts(username, parentId = 0, id, author = null, body = '', 
 	} catch(err){
 		throw err;
 	}
+}
+
+async function sendNotificationMentioneds(body, post_id, author){
+    try{
+        var users = body.match(/@\w+/g);
+        users = users ? users.map(palabra => palabra.slice(1)) : [];
+        for (const user of users) {
+            sendNotification(user, post_id, "Mentioned", author + " mentioned you in a SnapMsg " + post_id);
+        }
+	} catch(err){
+        console.log(err);
+	}
+}
+
+function sendNotification(username, post_id, title, message){
+    const pushData = "{ " + '"type": "trending","goto":' + '"' + post_id + '"} ';
+    axios.post(process.env.NOTIFICATION_APP_URL, {
+        subID: username,
+        appId: process.env.NOTIFICATION_APP_ID,
+        appToken: process.env.NOTIFICATION_APP_TOKEN,
+        title: title,
+        message: message,
+        pushData: pushData,
+    });
 }
 
 module.exports = {
