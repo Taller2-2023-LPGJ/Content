@@ -1,16 +1,34 @@
+const amqp = require('amqplib');
 const service = require('../services/post');
+const { postWorker } = require('./postWorker');
 
-const createPost = (req, res) => {
+const queue = "posts";
+let queueInitialized = false;
+let connection;
+let channel;
+
+const createPost = async (req, res) => {
     const { username, body, private, tags } = req.body;
     const { id } = req.params;
 
-    service.createPost(id, username, body, private, tags)
-        .then(() => {
-            res.status(200).json({message: 'SnapMsg successfully created.'});
-        })
-        .catch((err) => {
-            res.status(err.statusCode ?? 500).json({ message: err.message ?? 'An unexpected error has occurred. Please try again later.'});
-        });
+    try{
+        if(!queueInitialized && !connection && !channel){
+            connection = await amqp.connect("amqp://rabbitmq");        
+            channel = await connection.createChannel();
+        }
+
+        channel.assertQueue(queue, { durable: false});
+        channel.sendToQueue(queue, Buffer.from(JSON.stringify({id, username, body, private, tags})));
+
+        if(!queueInitialized){
+            postWorker(queue);
+            queueInitialized = true;
+        }
+
+        res.status(200).json({message: 'SnapMsg successfully created.'});
+    } catch(err){
+        res.status(500).json({ message: 'An unexpected error has occurred. Please try again later.'});
+    }
 }
 
 const editPost = (req, res) => {
@@ -50,6 +68,7 @@ const fetchPosts = (req, res) => {
             res.status(200).json(posts);
         })
         .catch((err) => {
+            console.log(err);
             res.status(err.statusCode ?? 500).json({ message: err.message ?? 'An unexpected error has occurred. Please try again later.'});
         });
 }

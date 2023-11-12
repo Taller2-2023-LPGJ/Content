@@ -245,6 +245,7 @@ async function fetchPosts(username, page, parentId, author, body, size){
                 COALESCE("sharedAt", "creationDate") DESC
             LIMIT ${size} OFFSET ${size * page};`;
     } catch(err){
+        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     } finally{
         await prisma.$disconnect();
