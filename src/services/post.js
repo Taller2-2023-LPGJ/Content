@@ -2,7 +2,6 @@ const axios = require('axios');
 const database = require('../database/post');
 const Exception = require('./exception');
 
-const hashtagSearchRegex = /^#[^#.,;]*$/;
 const pageSize = 20;
 
 async function createPost(parentId = 0, username, body, private = false, tags = []){
@@ -62,7 +61,7 @@ async function fetchPosts(username, parentId = 0, id, author = null, body = '', 
     
     try{
         if(!id)
-            posts = await database.fetchPosts(username, page, parentId, author, body, size);
+            posts = await database.fetchPosts(username, isNaN(+page) ? 0 : +page, isNaN(+parentId) ? 0 : +parentId, author, body, isNaN(+size) ? pageSize : +size);
         else
             posts = await database.fetchPost(username, isNaN(+id) ? 0 : +id);
 
@@ -84,6 +83,7 @@ async function fetchPosts(username, parentId = 0, id, author = null, body = '', 
             verified: profileData[post.author].verified ?? false
         }));
 	} catch(err){
+        console.log(err);
 		throw err;
 	}
 }
