@@ -93,7 +93,7 @@ async function sendNotificationMentioneds(body, post_id, author){
         var users = body.match(/@\w+/g);
         users = users ? users.map(palabra => palabra.slice(1)) : [];
         for (const user of users) {
-            await sendNotification(user, post_id, "Mentioned", author + " mentioned you in a SnapMsg " + post_id);
+            await sendNotification(user, post_id, "SnapMsg Mention", author + " mentioned you in a SnapMsg " + post_id);
         }
 	} catch(err){
         console.log(err);
