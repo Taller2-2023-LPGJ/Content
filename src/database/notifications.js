@@ -1,13 +1,18 @@
 const { PrismaClient } = require('@prisma/client');
 const Exception = require('../services/exception');
 
-async function create(data){
+async function create(subID, postId, sender, message, type){
     const prisma = new PrismaClient();
-    let post = null;
-
     try{
         await prisma.notifications.create({
-            data: data,
+            data: {
+                subID: subID,
+                postId: postId,
+                sender: sender,
+                message: message,
+                type: type,
+                creation: new Date()
+            }
         });
     } catch(err){
         console.log(err);

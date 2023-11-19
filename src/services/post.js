@@ -94,7 +94,8 @@ function sendNotificationMentioneds(body, post_id, author){
     try{
         var users = body.match(/@\w+/g);
         users = users ? users.map(palabra => palabra.slice(1)) : [];
-        for (const user of users) {
+        let uniqueUsers = [...new Set(users)]
+        for (const user of uniqueUsers) {
             sendNotification(user, post_id, "SnapMsg Mention", author);
         }
 	} catch(err){
@@ -116,13 +117,7 @@ async function sendNotification(username, post_id, title, sender){
         
     })
     .catch(async (error) => {
-        await notifications.create({
-            subID: username,
-            postId: post_id,
-            sender: sender,
-            type: typeNotificationMentions,
-            creation: new Date()
-        });
+        await notifications.create(username, post_id, sender, null, typeNotificationMentions);
     });
 }
 
