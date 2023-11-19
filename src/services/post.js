@@ -1,8 +1,10 @@
 const axios = require('axios');
 const database = require('../database/post');
 const Exception = require('./exception');
+const notifications = require('../database/notifications');
 
 const pageSize = 20;
+const typeNotificationMentions = 1;
 
 async function createPost(parentId = 0, username, body, private = false, tags = []){
     if(!body)
@@ -13,7 +15,7 @@ async function createPost(parentId = 0, username, body, private = false, tags = 
     try{
 		const id = await database.createPost(isNaN(+parentId) ? 0 : +parentId, username, body, private);
 		await database.addTags(id, tags);
-        await sendNotificationMentioneds(body, id, username);
+        sendNotificationMentioneds(body, id, username);
 	} catch(err){
 		throw err;
 	}
@@ -88,27 +90,39 @@ async function fetchPosts(username, parentId = 0, id, author = null, body = '', 
 	}
 }
 
-async function sendNotificationMentioneds(body, post_id, author){
+function sendNotificationMentioneds(body, post_id, author){
     try{
         var users = body.match(/@\w+/g);
         users = users ? users.map(palabra => palabra.slice(1)) : [];
         for (const user of users) {
-            await sendNotification(user, post_id, "SnapMsg Mention", author + " mentioned you in a SnapMsg " + post_id);
+            sendNotification(user, post_id, "SnapMsg Mention", author);
         }
 	} catch(err){
         console.log(err);
 	}
 }
 
-async function sendNotification(username, post_id, title, message){
+async function sendNotification(username, post_id, title, sender){
     const pushData = "{ " + '"type": "trending","goto":' + '"' + post_id + '"} ';
-    const profileData = await axios.post(process.env.NOTIFICATION_APP_URL, {
+    var message = sender + " mentioned you in a SnapMsg " + post_id
+    axios.post(process.env.NOTIFICATION_APP_URL, {
         subID: username,
         appId: process.env.NOTIFICATION_APP_ID,
         appToken: process.env.NOTIFICATION_APP_TOKEN,
         title: title,
         message: message,
         pushData: pushData,
+    }).then((response) => {
+        
+    })
+    .catch(async (error) => {
+        await notifications.create({
+            subID: username,
+            postId: post_id,
+            sender: sender,
+            type: typeNotificationMentions,
+            creation: new Date()
+        });
     });
 }
 
