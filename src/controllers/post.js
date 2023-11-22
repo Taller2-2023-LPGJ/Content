@@ -12,11 +12,11 @@ const createPost = async (req, res) => {
     const { id } = req.params;
 
     try{
-        if(!queueInitialized && !connection && !channel){
+        if(!connection)
             connection = await amqp.connect("amqp://rabbitmq");        
+        if(!channel)
             channel = await connection.createChannel();
-        }
-
+        
         channel.assertQueue(queue, { durable: false});
         channel.sendToQueue(queue, Buffer.from(JSON.stringify({id, username, body, private, tags})));
 

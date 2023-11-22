@@ -25,6 +25,7 @@ model posts {
   private      Boolean
   creationDate DateTime 
   editingDate  DateTime?
+  blocked      Boolean
 }
 
 model postTags {

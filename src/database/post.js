@@ -13,7 +13,7 @@ async function createPost(parentId, username, body, private){
                 body: body,
                 private: private,
                 creationDate: new Date(),
-                editingDate: null
+                editingDate: null,
             },
         });
 
@@ -72,7 +72,7 @@ async function editPost(id, username, body, private){
         });
     } catch(err){
         if(err.code == 'P2025')
-            throw new Exception('SnapMsg not found', 404);
+            throw new Exception('SnapMsg not found.', 404);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     } finally{
         await prisma.$disconnect();
@@ -169,17 +169,20 @@ async function fetchPosts(username, page, parentId, author, body, size){
                 LEFT JOIN likes l ON l."postId" = id
                 LEFT JOIN shares s ON s."postId" = id
                 WHERE
-                    private = false
-                    OR (
-                        private = true
-                        AND (
-                            author = ${username}
-                            OR 2 = (
-                                SELECT COUNT(1)
-                                FROM follows
-                                WHERE (
-                                    (follower = ${username} AND followed = author)
-                                    OR (followed = ${username} AND follower = author))
+                    p.blocked = false
+                    AND(
+                        private = false
+                        OR (
+                            private = true
+                            AND (
+                                author = ${username}
+                                OR 2 = (
+                                    SELECT COUNT(1)
+                                    FROM follows
+                                    WHERE (
+                                        (follower = ${username} AND followed = author)
+                                        OR (followed = ${username} AND follower = author))
+                                )
                             )
                         )
                     )
@@ -288,7 +291,8 @@ async function fetchPost(username, id){
             LEFT JOIN likes l ON l."postId" = id
             LEFT JOIN shares s ON s."postId" = id
             WHERE
-                p.id = ${id}
+                p.blocked = false
+                AND p.id = ${id}
                 AND (
                     private = false
                     OR (

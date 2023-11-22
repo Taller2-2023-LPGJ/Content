@@ -1,4 +1,5 @@
 const database = require('../database/admin');
+const Exception = require('./exception');
 const {
     fetchProfileData,
 } = require('./post');
@@ -25,6 +26,18 @@ async function fetchPosts(id, parentId, author = '', body = '', private = null, 
 	}
 }
 
+async function editPost(id, blocked){
+    if(isNaN(+id))
+        throw new Exception('SnapMsg not found.', 404);
+
+    try{
+        await database.editPost(+id, blocked);
+    } catch(err){
+        throw err;
+    }
+}
+
 module.exports = {
-    fetchPosts
+    fetchPosts,
+    editPost
 }
