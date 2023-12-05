@@ -29,6 +29,7 @@ async function viewFollowers(username, target, page = 0){
 			throw new Exception("Users must follow each other to view each other's followers.", 403);
 
 		const followers = await database.viewFollowers(target, page);
+
 		return followers.map(item => item.follower);
 	} catch(err){
 		throw err;

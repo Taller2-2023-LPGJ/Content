@@ -1,9 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('./client');
 const Exception = require('../services/exception');
 
 async function fetchPosts(id, parentId, author, body, private, page, size){
-    const prisma = new PrismaClient();
-
     try{
         const posts = await prisma.$queryRaw`
             SELECT 
@@ -52,14 +50,10 @@ async function fetchPosts(id, parentId, author, body, private, page, size){
         return [postCount[0].count, posts];
     } catch(err){
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
 async function editPost(id, blocked){
-    const prisma = new PrismaClient();
-
     try{
         await prisma.posts.update({
             where: {
@@ -73,8 +67,6 @@ async function editPost(id, blocked){
         if(err.code == 'P2025')
             throw new Exception('SnapMsg not found.', 404);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
