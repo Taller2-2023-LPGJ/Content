@@ -1,17 +1,14 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('./client');
 const Exception = require('../services/exception');
 
-
-async function createPost(parentId, username, body, private){
-    const prisma = new PrismaClient();
-
+async function createPost(parentId, username, body, privateFlag){
     try{
         const post = await prisma.posts.create({
             data: {
                 parentId: parentId,
                 author: username,
                 body: body,
-                private: private,
+                private: privateFlag,
                 creationDate: new Date(),
                 editingDate: null,
             },
@@ -21,14 +18,10 @@ async function createPost(parentId, username, body, private){
     } catch(err){
         console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
 async function addTags(id, tags){
-    const prisma = new PrismaClient();
-
     try{
         const tagsIds = await prisma.tags.findMany({
             where: {
@@ -51,14 +44,10 @@ async function addTags(id, tags){
         });
     } catch(err){
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
-async function editPost(id, username, body, private){
-    const prisma = new PrismaClient();
-
+async function editPost(id, username, body, privateFlag){
     try{
         await prisma.posts.update({
             where: {
@@ -67,7 +56,7 @@ async function editPost(id, username, body, private){
             },
             data: {
                 body: body,
-                private: private,
+                private: privateFlag,
                 editingDate: new Date(),
             },
         });
@@ -75,14 +64,10 @@ async function editPost(id, username, body, private){
         if(err.code == 'P2025')
             throw new Exception('SnapMsg not found.', 404);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
-    }
+    } 
 }
 
 async function editTags(id, tags){
-    const prisma = new PrismaClient();
-
     try{
         await prisma.postTags.deleteMany({
             where: {
@@ -91,8 +76,6 @@ async function editTags(id, tags){
         });
     } catch(err){
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 
     try{
@@ -103,8 +86,6 @@ async function editTags(id, tags){
 }
 
 async function deletePost(id, username){
-    const prisma = new PrismaClient();
-
     try{
         await prisma.shares.deleteMany({
             where: {
@@ -128,14 +109,10 @@ async function deletePost(id, username){
         if(err.code == 'P2025')
             throw new Exception('SnapMsg not found', 404);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
 async function fetchPosts(username, page, parentId, author, body, size){
-    const prisma = new PrismaClient();
-
     try{
         return await prisma.$queryRaw`
             WITH "tempPosts" AS (
@@ -249,16 +226,11 @@ async function fetchPosts(username, page, parentId, author, body, size){
                 COALESCE("sharedAt", "creationDate") DESC
             LIMIT ${size} OFFSET ${size * page};`;
     } catch(err){
-        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
 async function fetchPost(username, id){
-    const prisma = new PrismaClient();
-
     try{
         return await prisma.$queryRaw`
             SELECT 
@@ -313,8 +285,6 @@ async function fetchPost(username, id){
             GROUP BY id;`;
     } catch(err){
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 

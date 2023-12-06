@@ -1,10 +1,9 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('./client');
 const Exception = require('../services/exception');
 
 const pageSize = 10;
 
 async function fav(id, username){
-    const prisma = new PrismaClient();
     let post = null;
 
     try{
@@ -38,7 +37,7 @@ async function fav(id, username){
         throw new Exception('SnapMsg does not exist or has been deleted.', 404);
 
     try{
-        const post = await prisma.favourites.create({
+        await prisma.favourites.create({
             data: {
                 username: username,
                 postId: id,
@@ -49,14 +48,10 @@ async function fav(id, username){
         if(err.code == 'P2002')
             throw new Exception('SnapMsg has been already added to favourites list.', 403);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
 async function unfav(id, username){
-    const prisma = new PrismaClient();
-
     try{
         await prisma.favourites.delete({
             where: {
@@ -70,14 +65,10 @@ async function unfav(id, username){
         if(err.code == 'P2025')
             throw new Exception('SnapMsg does not exist, has been deleted, or has not been been added to favourites list.', 404);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
 async function favs(username, page){
-    const prisma = new PrismaClient();
-    
     try{
         return await prisma.$queryRaw`
             SELECT 
@@ -134,8 +125,6 @@ async function favs(username, page){
             LIMIT ${pageSize} OFFSET ${pageSize * page};`;
     } catch(err){
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 

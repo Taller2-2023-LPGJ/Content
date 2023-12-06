@@ -1,8 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('./client');
 const Exception = require('../services/exception');
 
 async function like(id, username){
-    const prisma = new PrismaClient();
     let post = null;
 
     try{
@@ -32,7 +31,7 @@ async function like(id, username){
     }
 
     if(!post || post.length === 0 || post[0].post != 1)
-        throw new Exception('SnapMsg does not exist or has been deleted.');
+        throw new Exception('SnapMsg does not exist or has been deleted.', 404);
 
     try{
         await prisma.likes.create({
@@ -46,14 +45,10 @@ async function like(id, username){
         if(err.code == 'P2002')
             throw new Exception('SnapMsg has been already liked.', 403);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
 async function unlike(id, username){
-    const prisma = new PrismaClient();
-
     try{
         await prisma.likes.delete({
             where: {
@@ -67,8 +62,6 @@ async function unlike(id, username){
         if(err.code == 'P2025')
             throw new Exception('SnapMsg does not exist, has been deleted, or has not been liked.', 404);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 

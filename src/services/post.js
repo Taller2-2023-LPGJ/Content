@@ -6,14 +6,14 @@ const notifications = require('../database/notifications');
 const pageSize = 20;
 const typeNotificationMentions = 1;
 
-async function createPost(parentId = 0, username, body, private = false, tags = []){
+async function createPost(parentId = 0, username, body, privateFlag = false, tags = []){
     if(!body)
         throw new Exception("A SnapMsg's body must not be empty.", 403);
     else if(body.length > 280)
         throw new Exception("SnapMsgs must be 280 or less characters long.", 403);
 
     try{
-		const id = await database.createPost(isNaN(+parentId) ? 0 : +parentId, username, body, private);
+		const id = await database.createPost(isNaN(+parentId) ? 0 : +parentId, username, body, privateFlag);
 		await database.addTags(id, tags);
         sendNotificationMentioneds(body, id, username);
 	} catch(err){
@@ -21,14 +21,14 @@ async function createPost(parentId = 0, username, body, private = false, tags = 
 	}
 }
 
-async function editPost(id, username, body, private = false, tags = []){
+async function editPost(id, username, body, privateFlag = false, tags = []){
     if(!body)
         throw new Exception("A SnapMsg's body must not be empty.", 403);
     else if(body.length > 280)
         throw new Exception("SnapMsgs must be 280 or less characters long.", 403);
 
     try{
-		await database.editPost(isNaN(+id) ? 0 : +id, username, body, private);
+		await database.editPost(isNaN(+id) ? 0 : +id, username, body, privateFlag);
         await database.editTags(isNaN(+id) ? 0 : +id, tags);
 	} catch(err){
 		throw err;
@@ -85,7 +85,6 @@ async function fetchPosts(username, parentId = 0, id, author = null, body = '', 
             verified: profileData[post.author].verified ?? false
         }));
 	} catch(err){
-        console.log(err);
 		throw err;
 	}
 }
