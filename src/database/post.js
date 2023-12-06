@@ -16,6 +16,7 @@ async function createPost(parentId, username, body, privateFlag){
 
         return post.id;
     } catch(err){
+        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     }
 }
@@ -287,6 +288,69 @@ async function fetchPost(username, id){
     }
 }
 
+async function numberPublications(username, startdate, finaldate){
+    const prisma = new PrismaClient();
+    var where = {};
+    where.author = username;
+    where.parentId = 0;
+    if(startdate || finaldate){
+        where.creationDate = {}
+    }
+
+    if(startdate){
+        where.creationDate.gte = new Date(startdate);
+    }
+
+    if(finaldate){
+        where.creationDate.lte = new Date(new Date(finaldate).setUTCHours(23,59,59,999));
+    }
+    
+    try{
+        return await prisma.posts.count({
+            where: where
+        });
+    } catch(err){
+        console.log(err);
+        throw new Exception('An unexpected error has occurred. Please try again later.', 500);
+    } finally{
+        await prisma.$disconnect();
+    }
+}
+
+async function numberComments(username, startdate, finaldate){
+    const prisma = new PrismaClient();
+    var where = {};
+    if(startdate || finaldate){
+        where.creationDate = {}
+    }
+
+    if(startdate){
+        where.creationDate.gte = new Date(startdate);
+    }
+
+    if(finaldate){
+        where.creationDate.lte = new Date(new Date(finaldate).setUTCHours(23,59,59,999));
+    }
+
+    try{
+        var postsUser = await prisma.posts.findMany({
+            where: {
+                author: username,
+            }
+        });
+        where.parentId = {in : postsUser.map(element => element.id)}
+        where.author = {not: username};
+        return await prisma.posts.count({
+            where: where
+        });
+    } catch(err){
+        console.log(err);
+        throw new Exception('An unexpected error has occurred. Please try again later.', 500);
+    } finally{
+        await prisma.$disconnect();
+    }
+}
+
 module.exports = {
     createPost,
     editPost,
@@ -295,4 +359,6 @@ module.exports = {
     fetchPost,
     addTags,
     editTags,
+    numberPublications,
+    numberComments
 };

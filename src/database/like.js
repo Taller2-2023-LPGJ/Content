@@ -37,7 +37,8 @@ async function like(id, username){
         await prisma.likes.create({
             data: {
                 username: username,
-                postId: id
+                postId: id,
+                creation: new Date()
             },
         });
     } catch(err){
@@ -64,7 +65,77 @@ async function unlike(id, username){
     }
 }
 
+async function numberLikes(username, startdate, finaldate){
+    const prisma = new PrismaClient();
+    try{
+        if(startdate || finaldate){
+            if(startdate && finaldate){
+                startdate = new Date(startdate);
+                finaldate = new Date(new Date(finaldate).setUTCHours(23,59,59,999));
+                var result = await prisma.$queryRaw`
+                    SELECT 
+                        COUNT(*)::integer
+                    FROM
+                        likes lk
+                        JOIN posts p ON p.id = lk."postId"
+                    WHERE
+                        p.author = ${username} AND
+                        lk."creation" >= ${startdate} AND
+                        lk."creation" <= ${finaldate}
+                        ;
+                `;
+                return result[0].count;
+            }else if(startdate){
+                startdate = new Date(startdate);
+                var result = await prisma.$queryRaw`
+                    SELECT 
+                        COUNT(*)::integer
+                    FROM
+                        likes lk
+                        JOIN posts p ON p.id = lk."postId"
+                    WHERE
+                        p.author = ${username} AND
+                        lk."creation" >= ${startdate}
+                        ;
+                `;
+                return result[0].count;
+            }else if(finaldate){
+                finaldate = new Date(new Date(finaldate).setUTCHours(23,59,59,999));
+                var result = await prisma.$queryRaw`
+                    SELECT 
+                        COUNT(*)::integer
+                    FROM
+                        likes lk
+                        JOIN posts p ON p.id = lk."postId"
+                    WHERE
+                        p.author = ${username} AND
+                        lk."creation" <= ${finaldate}
+                        ;
+                `;
+                return result[0].count;
+            }
+        }else{
+            var result = await prisma.$queryRaw`
+                SELECT 
+                    COUNT(*)::integer
+                FROM
+                    likes lk
+                    JOIN posts p ON p.id = lk."postId"
+                WHERE
+                    p.author = ${username};
+            `;
+            return result[0].count;
+        }
+    } catch(err){
+        console.log(err);
+        throw new Exception('An unexpected error has occurred. Please try again later.', 500);
+    } finally{
+        await prisma.$disconnect();
+    }
+}
+
 module.exports = {
     like,
     unlike,
+    numberLikes
 };
