@@ -1,33 +1,27 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('./client');
 const Exception = require('../services/exception');
 
-
-async function createPost(parentId, username, body, private){
-    const prisma = new PrismaClient();
-
+async function createPost(parentId, username, body, privateFlag){
     try{
         const post = await prisma.posts.create({
             data: {
                 parentId: parentId,
                 author: username,
                 body: body,
-                private: private,
+                private: privateFlag,
                 creationDate: new Date(),
-                editingDate: null
+                editingDate: null,
             },
         });
 
         return post.id;
     } catch(err){
+        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
 async function addTags(id, tags){
-    const prisma = new PrismaClient();
-
     try{
         const tagsIds = await prisma.tags.findMany({
             where: {
@@ -50,14 +44,10 @@ async function addTags(id, tags){
         });
     } catch(err){
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
-async function editPost(id, username, body, private){
-    const prisma = new PrismaClient();
-
+async function editPost(id, username, body, privateFlag){
     try{
         await prisma.posts.update({
             where: {
@@ -66,22 +56,18 @@ async function editPost(id, username, body, private){
             },
             data: {
                 body: body,
-                private: private,
+                private: privateFlag,
                 editingDate: new Date(),
             },
         });
     } catch(err){
         if(err.code == 'P2025')
-            throw new Exception('SnapMsg not found', 404);
+            throw new Exception('SnapMsg not found.', 404);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
-    }
+    } 
 }
 
 async function editTags(id, tags){
-    const prisma = new PrismaClient();
-
     try{
         await prisma.postTags.deleteMany({
             where: {
@@ -90,8 +76,6 @@ async function editTags(id, tags){
         });
     } catch(err){
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 
     try{
@@ -102,8 +86,6 @@ async function editTags(id, tags){
 }
 
 async function deletePost(id, username){
-    const prisma = new PrismaClient();
-
     try{
         await prisma.shares.deleteMany({
             where: {
@@ -127,14 +109,10 @@ async function deletePost(id, username){
         if(err.code == 'P2025')
             throw new Exception('SnapMsg not found', 404);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
 async function fetchPosts(username, page, parentId, author, body, size){
-    const prisma = new PrismaClient();
-
     try{
         return await prisma.$queryRaw`
             WITH "tempPosts" AS (
@@ -169,17 +147,20 @@ async function fetchPosts(username, page, parentId, author, body, size){
                 LEFT JOIN likes l ON l."postId" = id
                 LEFT JOIN shares s ON s."postId" = id
                 WHERE
-                    private = false
-                    OR (
-                        private = true
-                        AND (
-                            author = ${username}
-                            OR 2 = (
-                                SELECT COUNT(1)
-                                FROM follows
-                                WHERE (
-                                    (follower = ${username} AND followed = author)
-                                    OR (followed = ${username} AND follower = author))
+                    p.blocked = false
+                    AND(
+                        private = false
+                        OR (
+                            private = true
+                            AND (
+                                author = ${username}
+                                OR 2 = (
+                                    SELECT COUNT(1)
+                                    FROM follows
+                                    WHERE (
+                                        (follower = ${username} AND followed = author)
+                                        OR (followed = ${username} AND follower = author))
+                                )
                             )
                         )
                     )
@@ -197,10 +178,13 @@ async function fetchPosts(username, page, parentId, author, body, size){
                     author = COALESCE(${author}, author)
                     AND "parentId" = ${parentId}
                     AND (
-                        LOWER(body) LIKE '% ' || LOWER(${body}) || '%'
-                        OR LOWER(body) LIKE LOWER(${body}) || '%'
+                        CASE WHEN LEFT(${body}, 1) = '#' THEN
+                            body ~* (${body} || '[[:>:]]')
+                        ELSE
+                            LOWER(body) LIKE '%' || LOWER(${body}) || '%'
+                        END
                     )
-            
+
                 UNION ALL
             
                 SELECT
@@ -243,14 +227,10 @@ async function fetchPosts(username, page, parentId, author, body, size){
             LIMIT ${size} OFFSET ${size * page};`;
     } catch(err){
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
 async function fetchPost(username, id){
-    const prisma = new PrismaClient();
-
     try{
         return await prisma.$queryRaw`
             SELECT 
@@ -284,7 +264,8 @@ async function fetchPost(username, id){
             LEFT JOIN likes l ON l."postId" = id
             LEFT JOIN shares s ON s."postId" = id
             WHERE
-                p.id = ${id}
+                p.blocked = false
+                AND p.id = ${id}
                 AND (
                     private = false
                     OR (
@@ -304,6 +285,67 @@ async function fetchPost(username, id){
             GROUP BY id;`;
     } catch(err){
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
+    }
+}
+
+async function numberPublications(username, startdate, finaldate){
+    const prisma = new PrismaClient();
+    var where = {};
+    where.author = username;
+    where.parentId = 0;
+    if(startdate || finaldate){
+        where.creationDate = {}
+    }
+
+    if(startdate){
+        where.creationDate.gte = new Date(startdate);
+    }
+
+    if(finaldate){
+        where.creationDate.lte = new Date(new Date(finaldate).setUTCHours(23,59,59,999));
+    }
+    
+    try{
+        return await prisma.posts.count({
+            where: where
+        });
+    } catch(err){
+        console.log(err);
+        throw new Exception('An unexpected error has occurred. Please try again later.', 500);
+    } finally{
+        await prisma.$disconnect();
+    }
+}
+
+async function numberComments(username, startdate, finaldate){
+    const prisma = new PrismaClient();
+    var where = {};
+    if(startdate || finaldate){
+        where.creationDate = {}
+    }
+
+    if(startdate){
+        where.creationDate.gte = new Date(startdate);
+    }
+
+    if(finaldate){
+        where.creationDate.lte = new Date(new Date(finaldate).setUTCHours(23,59,59,999));
+    }
+
+    try{
+        var postsUser = await prisma.posts.findMany({
+            where: {
+                author: username,
+            }
+        });
+        where.parentId = {in : postsUser.map(element => element.id)}
+        where.author = {not: username};
+        return await prisma.posts.count({
+            where: where
+        });
+    } catch(err){
+        console.log(err);
+        throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     } finally{
         await prisma.$disconnect();
     }
@@ -317,4 +359,6 @@ module.exports = {
     fetchPost,
     addTags,
     editTags,
+    numberPublications,
+    numberComments
 };

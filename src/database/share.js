@@ -1,8 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('./client');
 const Exception = require('../services/exception');
 
 async function share(id, username){
-    const prisma = new PrismaClient();
     let post = null;
 
     try{
@@ -47,14 +46,10 @@ async function share(id, username){
         if(err.code == 'P2002')
             throw new Exception('SnapMsg has been already shared.', 403);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
-    }
+    } 
 }
 
 async function unshare(id, username){
-    const prisma = new PrismaClient();
-
     try{
         await prisma.shares.delete({
             where: {
@@ -68,6 +63,38 @@ async function unshare(id, username){
         if(err.code == 'P2025')
             throw new Exception('SnapMsg does not exist, has been deleted, or has not been been previously shared.', 404);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
+    }
+}
+
+async function numberSharedPosts(username, startdate, finaldate){
+    const prisma = new PrismaClient();
+    var where = {};
+    if(startdate || finaldate){
+        where.creation = {}
+    }
+
+    if(startdate){
+        where.creation.gte = new Date(startdate);
+    }
+
+    if(finaldate){
+        where.creation.lte = new Date(new Date(finaldate).setUTCHours(23,59,59,999));
+    }
+
+    try{
+        var postsUser = await prisma.posts.findMany({
+            where: {
+                author: username,
+            }
+        });
+        where.postId = {in : postsUser.map(element => element.id)}
+        where.username = {not: username};
+        return await prisma.shares.count({
+            where: where
+        });
+    } catch(err){
+        console.log(err);
+        throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     } finally{
         await prisma.$disconnect();
     }
@@ -75,5 +102,6 @@ async function unshare(id, username){
 
 module.exports = {
     share,
-    unshare
+    unshare,
+    numberSharedPosts
 };

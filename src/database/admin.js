@@ -1,9 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('./client');
 const Exception = require('../services/exception');
 
 async function fetchPosts(id, parentId, author, body, private, page, size){
-    const prisma = new PrismaClient();
-
     try{
         const posts = await prisma.$queryRaw`
             SELECT 
@@ -21,7 +19,8 @@ async function fetchPosts(id, parentId, author, body, private, page, size){
                     SELECT array_agg(name)
                     FROM tags t INNER JOIN "postTags" pt ON t.id = pt."tagId"
                     WHERE pt."postId" = p.id
-                ) AS tags
+                ) AS tags,
+                blocked
             FROM
                 posts p
             LEFT JOIN likes l ON l."postId" = id
@@ -51,11 +50,27 @@ async function fetchPosts(id, parentId, author, body, private, page, size){
         return [postCount[0].count, posts];
     } catch(err){
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
+    }
+}
+
+async function editPost(id, blocked){
+    try{
+        await prisma.posts.update({
+            where: {
+                id: id,
+            },
+            data: {
+                blocked: blocked,
+            },
+        });
+    } catch(err){
+        if(err.code == 'P2025')
+            throw new Exception('SnapMsg not found.', 404);
+        throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     }
 }
 
 module.exports = {
     fetchPosts,
+    editPost
 };

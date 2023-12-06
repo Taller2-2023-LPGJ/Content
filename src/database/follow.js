@@ -1,11 +1,9 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('./client');
 const Exception = require('../services/exception');
 
 const pageSize = 10;
 
 async function follow(follower, followed){
-    const prisma = new PrismaClient();
-
     try{
         await prisma.follows.create({
             data: {
@@ -17,14 +15,10 @@ async function follow(follower, followed){
         if(err.code == 'P2002') 
             throw new Exception('User is already being followed.', 403);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
 async function unfollow(follower, followed){
-    const prisma = new PrismaClient();
-
     try {
         await prisma.follows.delete({
             where: {
@@ -38,14 +32,10 @@ async function unfollow(follower, followed){
         if(err.code == 'P2025') 
             throw new Exception('User is not being followed.', 403);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
-    }
+    } 
 }
 
 async function isFetchAuthorized(username, target){
-    const prisma = new PrismaClient();
-    
     try {
         const isUserFollowingTarget = await prisma.follows.findFirst({
             where: {
@@ -64,14 +54,10 @@ async function isFetchAuthorized(username, target){
         return isUserFollowingTarget && isUserFollowedByTarget;
     } catch(err){
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
 async function viewFollowers(target, page){
-    const prisma = new PrismaClient();
-
     try {
         return await prisma.follows.findMany({
             where: {
@@ -85,14 +71,10 @@ async function viewFollowers(target, page){
         });
     } catch(_) {
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
 async function viewFollowed(target, page, all = false){
-    const prisma = new PrismaClient();
-
     let query = {
         where: {
             follower: target
@@ -111,14 +93,10 @@ async function viewFollowed(target, page, all = false){
         return await prisma.follows.findMany(query);
     } catch(_) {
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
 async function count(target, username){
-    const prisma = new PrismaClient();
-
     try {
         const result = await prisma.$queryRaw`
             SELECT (
@@ -141,8 +119,6 @@ async function count(target, username){
         return result[0];
     } catch(err) {
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 

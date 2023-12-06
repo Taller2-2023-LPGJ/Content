@@ -4,15 +4,18 @@
   "description": "Dedicado a las funcionalidades que involucren más de un usuario",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --coverage"
   },
   "author": "gstfrenkel",
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "^5.3.1",
+    "amqplib": "^0.10.3",
     "axios": "^1.5.1",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "jest": "^29.7.0",
+    "jest-mock-extended": "^3.0.5",
     "prisma": "^5.3.1"
   }
 }
