@@ -67,7 +67,6 @@ async function unshare(id, username){
 }
 
 async function numberSharedPosts(username, startdate, finaldate){
-    const prisma = new PrismaClient();
     var where = {};
     if(startdate || finaldate){
         where.creation = {}
@@ -93,10 +92,7 @@ async function numberSharedPosts(username, startdate, finaldate){
             where: where
         });
     } catch(err){
-        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 

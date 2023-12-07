@@ -16,7 +16,6 @@ async function createPost(parentId, username, body, privateFlag){
 
         return post.id;
     } catch(err){
-        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     }
 }
@@ -289,7 +288,6 @@ async function fetchPost(username, id){
 }
 
 async function numberPublications(username, startdate, finaldate){
-    const prisma = new PrismaClient();
     var where = {};
     where.author = username;
     where.parentId = 0;
@@ -310,15 +308,11 @@ async function numberPublications(username, startdate, finaldate){
             where: where
         });
     } catch(err){
-        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
 async function numberComments(username, startdate, finaldate){
-    const prisma = new PrismaClient();
     var where = {};
     if(startdate || finaldate){
         where.creationDate = {}
@@ -344,10 +338,7 @@ async function numberComments(username, startdate, finaldate){
             where: where
         });
     } catch(err){
-        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 
