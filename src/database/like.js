@@ -66,7 +66,6 @@ async function unlike(id, username){
 }
 
 async function numberLikes(username, startdate, finaldate){
-    const prisma = new PrismaClient();
     try{
         if(startdate || finaldate){
             if(startdate && finaldate){
