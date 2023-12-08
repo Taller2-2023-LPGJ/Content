@@ -66,8 +66,8 @@ const fetchPosts = async (req, res) => {
     const { id } = req.params;
 
     try{
-        const posts = await service.fetchPosts(username, id, postId, author, body, page, size)
-
+        const posts = await service.fetchPosts(username, id, postId, author, body, page, size);
+        
         res.status(200).json(posts);
     } catch(err){
         res.status(err.statusCode ?? 500).json({ message: err.message ?? 'An unexpected error has occurred. Please try again later.'});

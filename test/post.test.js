@@ -272,3 +272,76 @@ describe('Profile Data', () => {
         }
     });
 });
+
+describe('Get', () => {   
+    test('Feed', async () => {
+        prismaMock.$queryRaw.mockResolvedValueOnce([{author: 'gstfrenkel'}]);
+        axiosMock.post.mockResolvedValueOnce({data: {'gstfrenkel': {displayName: 'Gaston', picture: '', verified: true}}});
+
+        await controller.fetchPosts(req = { params: {}, query: {username: 'gstfrenkel', page: 0, size: 10} }, res);
+
+        expect(res.statusVal).toEqual(200);
+        expect(res.jsonVal).toEqual([{
+            author: 'gstfrenkel',
+            displayName: 'Gaston',
+            picture: '',
+            verified: true
+        }]);
+    });
+
+    test('Empty Feed', async () => {
+        prismaMock.$queryRaw.mockResolvedValueOnce([]);
+        axiosMock.post.mockResolvedValueOnce({data: {}});
+
+        await controller.fetchPosts(req = { params: {}, query: {username: 'gstfrenkel', page: 0, size: 10} }, res);
+
+        expect(res.statusVal).toEqual(200);
+    });
+
+    test('Comments', async () => {
+        prismaMock.$queryRaw.mockResolvedValueOnce([{author: 'gstfrenkel'}]);
+        axiosMock.post.mockResolvedValueOnce({data: {'gstfrenkel': {displayName: 'Gaston', picture: '', verified: true}}});
+
+        await controller.fetchPosts(req = { params: {id: '4'}, query: {username: 'gstfrenkel', page: 0, size: 10} }, res);
+
+        expect(res.statusVal).toEqual(200);
+        expect(res.jsonVal).toEqual([{
+            author: 'gstfrenkel',
+            displayName: 'Gaston',
+            picture: '',
+            verified: true
+        }]);
+    });
+
+    test('Unsuccessfully', async () => {
+        prismaMock.$queryRaw.mockRejectedValueOnce(new Error(''));
+
+        await controller.fetchPosts(req = { params: {id: '4'}, query: {username: 'gstfrenkel', page: 0, size: 10} }, res);
+
+        expect(res.statusVal).not.toEqual(200);
+    });
+
+    test('Post by ID', async () => {
+        prismaMock.$queryRaw.mockResolvedValueOnce([{author: 'gstfrenkel'}]);
+        axiosMock.post.mockResolvedValueOnce({data: {'gstfrenkel': {displayName: 'Gaston', picture: '', verified: true}}});
+
+        await controller.fetchPosts(req = { params: {}, query: {username: 'gstfrenkel', page: 0, size: 10, id: '4'} }, res);
+
+        expect(res.statusVal).toEqual(200);
+        expect(res.jsonVal).toEqual([{
+            author: 'gstfrenkel',
+            displayName: 'Gaston',
+            picture: '',
+            verified: true
+        }]);
+    });
+
+    test('Non-Existent Post by ID', async () => {
+        prismaMock.$queryRaw.mockResolvedValueOnce([]);
+        axiosMock.post.mockResolvedValueOnce({data: {}});
+
+        await controller.fetchPosts(req = { params: {}, query: {username: 'gstfrenkel', page: 0, size: 10, id: '5'} }, res);
+
+        expect(res.statusVal).toEqual(404);
+    });
+});
