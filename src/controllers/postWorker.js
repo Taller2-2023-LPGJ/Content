@@ -9,10 +9,9 @@ const postWorker = async (queue) => {
         await channel.assertQueue(queue, { durable: false });
     
         channel.consume(queue, async (msg) => {
-            const { id, username, body, tags } = JSON.parse(msg.content.toString());
-            const priv = JSON.parse(msg.content.toString()).private;
+            const { id, username, body, privateFlag, tags } = JSON.parse(msg.content.toString());
             
-            await service.createPost(id, username, body, priv, tags);
+            await service.createPost(id, username, body, privateFlag, tags);
     
             channel.ack(msg);
         });
