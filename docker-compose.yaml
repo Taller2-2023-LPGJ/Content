@@ -16,7 +16,9 @@ services:
 
   # Servicio para PostgreSQL
   t2-content-db:
-    image: postgres:latest
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.db
     container_name: t2-content-db
     restart: always
     environment:
@@ -32,7 +34,9 @@ services:
 
   # Servicio para PgAdmin
   t2-content-pgadmin:
-    image: dpage/pgadmin4:latest
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.pgadmin
     container_name: t2-content-pgadmin
     restart: always
     environment:
