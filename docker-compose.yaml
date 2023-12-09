@@ -68,7 +68,9 @@ services:
       - taller2  
 
   rabbitmq:
-    image: "rabbitmq:3-management"
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.rabbitmq
     container_name: "rabbitmq"
     ports:
       - "5672:5672"
