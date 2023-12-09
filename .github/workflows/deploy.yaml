@@ -21,7 +21,7 @@ jobs:
     - name: "Activate Namespace"
       uses: okteto/namespace@latest
       with:
-        namespace: snap-msg-auth-content-julianquino
+        namespace: snap-msg-content-julianquino
 
     - name: "Create stack"
       uses: okteto/deploy-stack@latest
