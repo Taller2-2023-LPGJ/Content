@@ -24,7 +24,7 @@ jobs:
     - name: Run Tests
       run: npm test
 
-  devflow:
+  deploy:
     runs-on: ubuntu-latest
     needs: test
     steps:
