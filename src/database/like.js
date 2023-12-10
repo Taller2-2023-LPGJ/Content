@@ -66,7 +66,6 @@ async function unlike(id, username){
 }
 
 async function numberLikes(username, startdate, finaldate){
-    const prisma = new PrismaClient();
     try{
         if(startdate || finaldate){
             if(startdate && finaldate){
@@ -127,10 +126,7 @@ async function numberLikes(username, startdate, finaldate){
             return result[0].count;
         }
     } catch(err){
-        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
-    } finally{
-        await prisma.$disconnect();
     }
 }
 

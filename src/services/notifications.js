@@ -20,7 +20,6 @@ async function sendNotificationsForUser(username){
             }
         });
 	} catch(err){
-        console.log(err);
 		throw err;
 	}
 }
@@ -45,7 +44,6 @@ async function create(subID, postId, sender, message, type){
     try{
 		await database.create(subID, postId, sender, message, type);
 	} catch(err){
-        console.log(err);
 		throw err;
 	}
 }

@@ -1,8 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('./client')
 const Exception = require('../services/exception');
 
 async function create(subID, postId, sender, message, type){
-    const prisma = new PrismaClient();
     try{
         await prisma.notifications.create({
             data: {
@@ -15,13 +14,11 @@ async function create(subID, postId, sender, message, type){
             }
         });
     } catch(err){
-        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     }
 }
 
 async function delet(id){
-    const prisma = new PrismaClient();
     try{
         await prisma.notifications.delete({
             where: {
@@ -29,13 +26,11 @@ async function delet(id){
             },
         });
     } catch(err){
-        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     }
 }
 
 async function notifications(username){
-    const prisma = new PrismaClient();
     var where = {};
     if(username){
         where.subID = username;
@@ -46,7 +41,6 @@ async function notifications(username){
             where: where
         });
     } catch(err){
-        console.log(err);
         throw new Exception('An unexpected error has occurred. Please try again later.', 500);
     }
 }
